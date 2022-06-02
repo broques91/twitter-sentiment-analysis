@@ -11,3 +11,6 @@ produce/config.ini
 
 ### Virtual Env ###
 venv/
+
+### Volumes
+data/
