@@ -50,13 +50,14 @@ services:
     image: 'mongo:latest'
     container_name: 'mongo'
     environment:
-      - MONGO_INITDB_DATABASE=twitter
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=secret
+      - MONGO_INITDB_DATABASE=tweets
     volumes:
       - ./data:/data/db
     ports:
       - "27017:27017"
+  
 
   streamlit:
     container_name: streamlit
@@ -64,3 +65,6 @@ services:
     depends_on:
       - db
     restart: on-failure
+
+volumes:
+  data:

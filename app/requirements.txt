@@ -1,2 +1,4 @@
 streamlit
 pymongo
+plotly==4.14.3
+plotly-express==0.4.1

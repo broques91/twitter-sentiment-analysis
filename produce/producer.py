@@ -1,4 +1,3 @@
-from sys import api_version
 import tweepy
 import logging
 
@@ -12,7 +11,7 @@ def stream(data):
     i = 0
     for tweet in api.search_tweets(q=data, count=100, lang='fr'):
         #print(tweet.text)
-        print(tweet._json)
+        #print(tweet._json)
         producer.send(topic_name, tweet._json)
         i+=1
         if i == 100:

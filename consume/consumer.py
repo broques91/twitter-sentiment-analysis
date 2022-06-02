@@ -1,15 +1,34 @@
+import json
 from kafka import KafkaConsumer
 from pymongo import MongoClient
-import json
+from textblob import TextBlob
+from textblob import TextBlob
+from textblob_fr import PatternTagger, PatternAnalyzer
 
+
+def getSubjectivity(tweet: str) -> float:
+    return TextBlob(tweet, pos_tagger=PatternTagger(), analyzer=PatternAnalyzer()).sentiment[1]
+
+def getPolarity(tweet: str) -> float:
+    return TextBlob(tweet, pos_tagger=PatternTagger(), analyzer=PatternAnalyzer()).sentiment[0]
+
+def getSentiment(polarityValue: float) -> str:
+    if polarityValue < 0:
+        return 'Negative'
+    elif polarityValue == 0:
+        return 'Neutral'
+    else:
+        return 'Positive'
 
 # Connect to MongoDB and tweets database
 try:
-   client = MongoClient('localhost',27017)
-   db = client.twitter
+   client = MongoClient('db', username='root', password='secret')
+   db = client.tweets
    print("Connected successfully!")
 except:  
    print("Could not connect to MongoDB")
+
+collection = db.elections
 
 topic_name = 'twitter'
 
@@ -22,18 +41,29 @@ consumer = KafkaConsumer(
 
 # Parse received data from Kafka
 for message in consumer:
-    record = json.loads(json.dumps(message.value))
-    print(record)
+   record = json.loads(json.dumps(message.value))
+   #print(record)
 
-    content = record['text']
+   print(record['text'])
+   tweet = TextBlob(record["text"])
 
-    # Create dictionary and ingest data into MongoDB
-    try:
-       tweet_rec = {'content':content}
-       db.tweets.insert_one(tweet_rec)
-       rec_id1 = db.tweets.insert_one(tweet_rec)
-       print("Data inserted with record ids", rec_id1)
-    except:
+
+   # output sentiment
+   # print("Subjectivity: ", getSubjectivity(record['text']))
+   # print("Polarity: ", getPolarity(record['text']))
+   polarity_value = getPolarity(record['text'])
+   sentiment = getSentiment(polarity_value)
+   print("Sentiment: ", sentiment)
+   print("")
+
+   # Create dictionary and ingest data into MongoDB
+   try:
+      tweet_rec = {'content': record['text'].encode('utf-8', 'strict'), 'sentiment': sentiment.encode('utf-8', 'strict')}
+      rec_id1 = collection.insert_one(tweet_rec)
+      print("Data inserted with record ids", rec_id1)
+   
+   except Exception as e:
+       print(e)
        print("Could not insert into MongoDB")
 
 
