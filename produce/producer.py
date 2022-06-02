@@ -26,7 +26,8 @@ if __name__ == "__main__":
 
     # kafka
     producer = KafkaProducer(
-        bootstrap_servers=['twitter_kafka:9096', 'twitter_kafka:9097', 'twitter_kafka:9098'],
+        bootstrap_servers=['kafka:9092'],
+        api_version=(0,11,5),
         value_serializer=lambda t: json.dumps(t).encode('utf-8')
         )
     topic_name = 'twitter'

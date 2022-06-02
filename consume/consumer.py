@@ -16,7 +16,8 @@ topic_name = 'twitter'
 # connect kafka consumer to desired kafka topic	
 consumer = KafkaConsumer(
     topic_name,
-    bootstrap_servers=['twitter_kafka:9096', 'twitter_kafka:9097', 'twitter_kafka:9098'],
+    bootstrap_servers=['kafka:9092'],
+    api_version=(0,11,5),
     value_deserializer=lambda x: json.loads(x.decode('utf-8')))
 
 # Parse received data from Kafka
@@ -29,6 +30,7 @@ for message in consumer:
     # Create dictionary and ingest data into MongoDB
     try:
        tweet_rec = {'content':content}
+       db.tweets.insert_one(tweet_rec)
        rec_id1 = db.tweets.insert_one(tweet_rec)
        print("Data inserted with record ids", rec_id1)
     except:
