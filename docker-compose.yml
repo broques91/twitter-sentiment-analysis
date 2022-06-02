@@ -29,57 +29,34 @@ services:
         max-file: "10"
 
   zookeeper:
-    container_name: twitter_zookeeper
-    image: wurstmeister/zookeeper:3.4.6
-    restart: on-failure
-    expose:
-      - "2181"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "200k"
-        max-file: "10"
+    container_name: twitter_zookeper
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
 
   kafka:
-    container_name: 'twitter_kafka'
-    image: wurstmeister/kafka:2.12-2.4.0
+    container_name: twitter_kafka
+    image: confluentinc/cp-kafka:latest
     depends_on:
       - zookeeper
-    restart: on-failure
-    ports:
-      - "9096:9096"
-    expose:
-      - "9097"
-    volumes:
-      - ./persistence/kafka:/tmp/kafka-logs
     environment:
-      - "KAFKA_BROKER_ID=1"
-      - "KAFKA_LISTENERS=INSIDE://0.0.0.0:9097,OUTSIDE://0.0.0.0:9096"
-      - "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT"
-      - "KAFKA_ADVERTISED_LISTENERS=INSIDE://localhost:9097,OUTSIDE://localhost:9096"
-      - "KAFKA_INTER_BROKER_LISTENER_NAME=INSIDE"
-      - "KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181"
-      - "KAFKA_CREATE_TOPICS=tweets:1:1"
-      - "KAFKA_LOG_DIRS=/tmp/kafka-logs"
-      - "KAFKA_LOG_RETENTION_HOURS=24"
-      - "KAFKA_LOG_CLEANUP_POLICY=delete"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "200k"
-        max-file: "10"
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
    
   db:
-    image: 'mongo'
+    image: 'mongo:latest'
     container_name: 'mongo'
     environment:
       - MONGO_INITDB_DATABASE=twitter
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=secret
     volumes:
-      - ./mongo-volume:/data/db
+      - ./data:/data/db
     ports:
-      - '27017-27019:27017-27019'
+      - "27017:27017"
 
   streamlit:
     container_name: streamlit
