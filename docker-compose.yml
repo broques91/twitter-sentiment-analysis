@@ -10,7 +10,7 @@ services:
     restart: on-failure
     volumes:
       - ./produce:/produce
-      - ./config.ini:/produce/config.ini
+
 
   consumer:
     container_name: twitter_consumer
@@ -21,7 +21,6 @@ services:
     restart: on-failure
     volumes:
       - ./consume:/consume
-      - ./config.ini:/consume/config.ini
     logging:
       driver: "json-file"
       options:
