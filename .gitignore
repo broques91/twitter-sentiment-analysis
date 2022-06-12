@@ -4,13 +4,8 @@ __pycache__/
 *$py.class
 
 ### Keys ###
-config.ini
-app/secrets.toml
-consume/config.ini
-produce/config.ini
-
-### Virtual Env ###
-venv/
+.env
+produce/secret.ini
 
 ### Volumes
 data/
