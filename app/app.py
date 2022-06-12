@@ -4,14 +4,19 @@ import json
 import plotly.express as px
 
 from pymongo import MongoClient
-from streamlit_autorefresh import st_autorefresh
+#from streamlit_autorefresh import st_autorefresh
 
 # update every 5 mins
-st_autorefresh(interval=5 * 60 * 1000, key="dataframerefresh")
+#st_autorefresh(interval=5 * 60 * 1000, key="dataframerefresh")
 
-# Add title on the page
+
+st.set_page_config(
+    page_title="Real-Time Twitter Sentiment Analysis Dashboard",
+    page_icon="✅",
+    layout="wide",
+)
+
 st.title("Twitter Sentiment Analysis")
-
 st.sidebar.title("Tweets about Elections FR")
 
 
