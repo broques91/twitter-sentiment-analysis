@@ -2,8 +2,7 @@
 from kafka import KafkaConsumer
 from pymongo import MongoClient
 import re
-import json
-import os
+
 
 from pyspark.sql import functions as F
 from pyspark.sql.functions import explode
@@ -11,7 +10,6 @@ from pyspark.sql.functions import split
 from pyspark.sql.types import StringType, StructType, StructField, FloatType
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col, udf
-from pyspark.ml.feature import RegexTokenizer
 from textblob import TextBlob
 from textblob_fr import PatternTagger, PatternAnalyzer
 
@@ -56,6 +54,13 @@ def getSentiment(polarityValue: float) -> str:
     else:
         return 'Positive'
 
+# def write_row_in_mongo(df):
+#     myclient = pymongo.MongoClient("mongodb://localhost:27017/")
+#     mydb = myclient["te1"]
+#     mycol = mydb["coll"]
+#     mycol.insert_one(df.asDict())
+#     pass
+
 
 class write_row_in_mongo:
     def open(self, partition_id, epoch_id):
@@ -71,6 +76,8 @@ class write_row_in_mongo:
     def close(self, error):
         self.myclient.close()
         pass
+
+
 
 def main():
     spark = SparkSession\
@@ -111,7 +118,7 @@ def main():
 
     
 
-    sentiment_tweets.writeStream.foreach(write_row_in_mongo).start().awaitTermination()
+    sentiment_tweets.writeStream.foreach(write_row_in_mongo()).start().awaitTermination()
 
 
 
