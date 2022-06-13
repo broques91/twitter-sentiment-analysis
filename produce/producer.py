@@ -1,3 +1,4 @@
+import time
 import tweepy
 import logging
 
@@ -11,7 +12,8 @@ def stream(data):
     for tweet in api.search_tweets(q=data, count=100, lang='fr'):
         producer.send(topic_name, tweet._json)
         i+=1
-        if i == 100:
+        time.sleep(30)
+        if i == 1000:
             break
         else:
             pass
