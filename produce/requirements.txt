@@ -1,5 +1,0 @@
-kafka-python
-tweepy
-configparser
-pymongo
-pyspark
