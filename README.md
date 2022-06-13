@@ -11,7 +11,7 @@ This application will collect some tweets, push to Kafka via tweepy, use PySpark
 ## Setup
 
 - Clone the repo
-- After obtaining your set of Twitter API key and secret, you have to set those in the secret.ini file :
+- After obtaining your set of Twitter API keys and tokens, you have to set those in the secret.ini file :
 
 ```
 [twitter]
