@@ -1,7 +1,6 @@
 
-from kafka import KafkaConsumer
-from pymongo import MongoClient
 import re
+from datetime import datetime
 
 from pyspark.sql.types import StringType, StructType, StructField, FloatType
 from pyspark.sql import SparkSession
@@ -50,6 +49,9 @@ def getSentiment(polarityValue: float) -> str:
     else:
         return 'Positive'
 
+def convert_date(date):
+    return datetime.strftime(datetime.strptime(date,'%a %b %d %H:%M:%S +0000 %Y'), '%Y-%m-%d %H:%M:%S')
+
 # def write_row_in_mongo(df):
 #     myclient = pymongo.MongoClient("mongodb://localhost:27017/")
 #     mydb = myclient["te1"]
@@ -63,15 +65,12 @@ class write_row_in_mongo:
         self.myclient = pymongo.MongoClient("mongodb://localhost:27017/")
         self.mydb = self.myclient["te1"]
         self.mycol = self.mydb["coll"]
-        pass
 
     def process(self, row):
         self.mycol.insert_one(row.asDict())
-        pass
 
     def close(self, error):
         self.myclient.close()
-        pass
 
 
 
@@ -92,10 +91,10 @@ def main():
               
 
     mySchema = StructType([StructField("text", StringType(), True)])
-    values = tweets.select(from_json(tweets.value.cast("string"), mySchema).alias("tweet"))
+    mySchema2 = StructType([StructField("created_at", StringType(), True)])
+    values = tweets.select(from_json(tweets.value.cast("string"), mySchema).alias("tweet"),from_json(tweets.value.cast("string"),mySchema2).alias("date"))    
         
-        
-    df1 = values.select("tweet.*")
+    df1 = values.select("tweet.*","date.*")
 
 
     clean_tweets = udf(cleanTweet, StringType())
@@ -104,14 +103,15 @@ def main():
     subjectivity = udf(getSubjectivity, FloatType())
     polarity = udf(getPolarity, FloatType())
     sentiment = udf(getSentiment, StringType())
+    date_datetime = udf(convert_date, StringType())
 
     subjectivity_tweets = raw_tweets.withColumn('subjectivity', subjectivity(col("processed_text")))
     polarity_tweets = subjectivity_tweets.withColumn("polarity", polarity(col("processed_text")))
     sentiment_tweets = polarity_tweets.withColumn("sentiment", sentiment(col("polarity")))
-
+    sentiment_tweets_date = sentiment_tweets.withColumn("date", date_datetime(col("created_at")))
     
 
-    sentiment_tweets.writeStream.foreach(write_row_in_mongo()).start().awaitTermination()
+    sentiment_tweets_date.writeStream.foreach(write_row_in_mongo()).start().awaitTermination()
 
 
 
