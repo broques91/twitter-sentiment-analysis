@@ -3,10 +3,6 @@ from kafka import KafkaConsumer
 from pymongo import MongoClient
 import re
 
-
-from pyspark.sql import functions as F
-from pyspark.sql.functions import explode
-from pyspark.sql.functions import split
 from pyspark.sql.types import StringType, StructType, StructField, FloatType
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col, udf
@@ -84,9 +80,6 @@ def main():
             .builder\
             .master("local[2]")\
             .appName("twitter_sentiment")\
-            .config('spark.mongodb.input.uri', 'mongodb://127.0.0.1:27017')\
-            .config('spark.mongodb.output.uri', 'mongodb://127.0.0.1:27017')\
-            .config('spark.jars.packages', 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1')\
             .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2") \
             .getOrCreate()
 
@@ -105,12 +98,12 @@ def main():
     df1 = values.select("tweet.*")
 
 
-    clean_tweets = F.udf(cleanTweet, StringType())
+    clean_tweets = udf(cleanTweet, StringType())
     raw_tweets = df1.withColumn('processed_text', clean_tweets(col("text")))
         
-    subjectivity = F.udf(getSubjectivity, FloatType())
-    polarity = F.udf(getPolarity, FloatType())
-    sentiment = F.udf(getSentiment, StringType())
+    subjectivity = udf(getSubjectivity, FloatType())
+    polarity = udf(getPolarity, FloatType())
+    sentiment = udf(getSentiment, StringType())
 
     subjectivity_tweets = raw_tweets.withColumn('subjectivity', subjectivity(col("processed_text")))
     polarity_tweets = subjectivity_tweets.withColumn("polarity", polarity(col("processed_text")))
