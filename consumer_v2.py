@@ -49,9 +49,6 @@ def getSentiment(polarityValue: float) -> str:
     else:
         return 'Positive'
 
-def convert_date(date):
-    return datetime.strftime(datetime.strptime(date,'%a %b %d %H:%M:%S +0000 %Y'), '%Y-%m-%d %H:%M:%S')
-
 # def write_row_in_mongo(df):
 #     myclient = pymongo.MongoClient("mongodb://localhost:27017/")
 #     mydb = myclient["te1"]
@@ -107,7 +104,6 @@ def main():
     subjectivity = udf(getSubjectivity, FloatType())
     polarity = udf(getPolarity, FloatType())
     sentiment = udf(getSentiment, StringType())
-    date_datetime = udf(convert_date, StringType())
 
     subjectivity_tweets = raw_tweets.withColumn('subjectivity', subjectivity(col("processed_text")))
     polarity_tweets = subjectivity_tweets.withColumn("polarity", polarity(col("processed_text")))
