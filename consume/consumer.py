@@ -1,5 +1,6 @@
 import json
 import re
+from datetime import datetime
 from kafka import KafkaConsumer
 from pymongo import MongoClient
 from textblob import TextBlob

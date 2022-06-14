@@ -13,6 +13,17 @@ st.set_page_config(
     layout="wide",
 )
 
+st.write(
+    """
+    <style>
+    [data-testid="stMetricDelta"] svg {
+        display: none;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # dashboard title
 st.title("Real-Time Twitter Sentiment Analysis Dashboard")
 
@@ -94,15 +105,15 @@ while True:
 
         # fill in those three columns with respective metrics or KPIs 
         kpi1.metric(label="Tweets", value=int(count_tweets), delta=None)
-        kpi2.metric(label="Positive  😊", value=count_positive, delta=avg_positive)
-        kpi3.metric(label="Neutral  😐", value=count_neutral, delta=avg_neutral)
-        kpi4.metric(label="Negative  😒", value=count_negative, delta=avg_negative)
+        kpi2.metric(label="Positive  😊", value=count_positive, delta=f'{round(avg_positive*100, 2)} %')
+        kpi3.metric(label="Neutral  😐", value=count_neutral, delta=f'{round(avg_neutral*100, 2)} %')
+        kpi4.metric(label="Negative  😒", value=count_negative, delta=f'{round(avg_negative*100, 2)} %')
 
 
         fig_col1, fig_col2 = st.columns(2)
         with fig_col1:
             st.markdown("### Time Series")
-            fig = px.line(data_frame=df, x='date')
+            fig = px.line(data_frame=df, x='date', color='sentiment')
             st.write(fig)
         with fig_col2:
             st.markdown("### Second Chart")
