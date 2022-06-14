@@ -2,7 +2,7 @@ import requests
 import os
 import json
 
-bearer_token = "AAAAAAAAAAAAAAAAAAAAAM2TdAEAAAAAKUGOGvaR8IBCRbybdpHTl2oyikU%3D02O8fWBJH5mpoSAckfjpBkQmkLo2JYOUC5cOu4MWwwpOSBPrDs"
+bearer_token = "bear"
 
 def bearer_oauth(r):
     """
