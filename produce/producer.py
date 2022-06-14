@@ -1,63 +1,31 @@
-import time
-import tweepy
+import json
 import logging
+import snscrape.modules.twitter as sntwitter
 
 from kafka import KafkaProducer
-import configparser
-import json
 
 
-def stream(data):
-    i = 0
-    for tweet in api.search_tweets(q=data, count=100, lang='fr'):
-        producer.send(topic_name, tweet._json)
-        i+=1
-        time.sleep(30)
-        if i == 1000:
-            break
-        else:
-            pass
+# Kafka
+producer = KafkaProducer(
+    bootstrap_servers=['kafka:9092'],
+    api_version=(0,11,5),
+    value_serializer=lambda t: json.dumps(t, default=str).encode('utf-8')
+)
 
+topic_name = 'twitter'
 
-if __name__ == "__main__":
-    config = configparser.ConfigParser()
+query = 'elections lang:fr -is:retweet'
+#query = 'elections lang:fr -is:retweet until-2022-06-01 since:2020-01-01'
+tweets = []
+limit = 100
 
-    # Kafka
-    producer = KafkaProducer(
-        bootstrap_servers=['kafka:9092'],
-        api_version=(0,11,5),
-        value_serializer=lambda t: json.dumps(t).encode('utf-8')
-        )
-
-    topic_name = 'twitter'
-
-    # Setup logging
-    logging.basicConfig(
-        level = logging.INFO,
-        format = "[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s")
-    
-    # Read credentials
-    try:
-        config.read('secret.ini')
-        CONSUMER_KEY = config['twitter']['consumer_key']
-        CONSUMER_SECRET = config['twitter']['consumer_secret']
-        ACCESS_TOKEN = config['twitter']['access_token']
-        ACCESS_TOKEN_SECRET = config['twitter']['access_token_secret']
-        logging.info("Twitter API credentials parsed.")
-    except KeyError as e:
-        logging.error("Config file not found. Make sure it is available in the directory.")
-        exit()
-    except AttributeError as e:
-        logging.error("Cannot read Twitter API credentials. Make sure that API key and secret are in the config.ini file (also check spelling).")
-        exit()
-
-    # authenticate
-    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-    api = tweepy.API(auth)
-
-    # stream
-    logging.info("Starting publishing...")
-    stream(data = ['elections'])
-
-    producer.flush()
+for tweet in sntwitter.TwitterSearchScraper(query).get_items():
+    #print(vars(tweet))
+    data = vars(tweet)
+    #break
+    if len(tweets) == limit:
+        break
+    else:
+        # send to producer
+        producer.send(topic_name, data)
+     
