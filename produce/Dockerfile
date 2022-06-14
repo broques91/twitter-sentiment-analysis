@@ -1,6 +1,5 @@
-FROM python:3.8-alpine3.11
+FROM python:3.9
 
-RUN apk update && apk add build-base
 
 WORKDIR /produce
 COPY . .
