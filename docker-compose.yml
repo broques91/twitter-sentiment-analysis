@@ -11,7 +11,6 @@ services:
     volumes:
       - ./produce:/produce
 
-
   consumer:
     container_name: twitter_consumer
     build: "./consume"
@@ -44,7 +43,7 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-   
+  
   db:
     image: 'mongo:latest'
     container_name: 'mongo'
@@ -57,7 +56,6 @@ services:
     ports:
       - "27017:27017"
   
-
   streamlit:
     container_name: streamlit
     build: "./app"
