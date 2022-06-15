@@ -2,3 +2,5 @@ kafka-python
 pymongo
 textblob
 textblob-fr
+pyspark
+findspark
