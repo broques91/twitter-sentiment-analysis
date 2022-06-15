@@ -1,17 +1,40 @@
-import re
-from datetime import datetime
-
-from pyspark.sql.types import StringType, StructType, StructField, FloatType
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, udf
-from textblob import TextBlob
-from textblob_fr import PatternTagger, PatternAnalyzer
-
-import pymongo
-
 import findspark
 
-findspark.init()
+findspark.init("")
+import pyspark
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import from_json, col, expr, udf
+from pyspark.sql.types import *
+from textblob import TextBlob
+from textblob_fr import PatternTagger, PatternAnalyzer
+import pymongo
+import re
+
+print("modules imported")
+
+KAFKA_TOPIC_NAME_CONS = "twitter"
+KAFKA_BOOTSTRAP_SERVERS_CONS = "kafka:9092"
+
+print("PySpark Structured Streaming with Kafka Application Started ...")
+
+spark = (
+    SparkSession.builder.master("spark://spark:7077")
+    .appName("Real-Time Twitter Sentiment Analysis")
+    .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0")
+    .getOrCreate()
+)
+
+print("Now time to connect to Kafka broker to read Invoice Data")
+
+spark.sparkContext.setLogLevel("ERROR")
+print(" kafka Started ...")
+# Construct a streaming DataFrame that reads from twitter
+df = (
+    spark.readStream.format("kafka")
+    .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVERS_CONS)
+    .option("subscribe", KAFKA_TOPIC_NAME_CONS)
+    .load()
+)
 
 
 def cleanTweet(tweet: str) -> str:
@@ -72,57 +95,48 @@ class WriteRowMongo:
         return True
 
 
-def main():
-    spark = (
-        SparkSession.builder.master("spark://spark:7077")
-        .appName("twitter_sentiment")
-        .config(
-            "spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2"
-        )
-        .getOrCreate()
-    )
+mySchema = StructType([StructField("text", StringType(), True)])
+mySchema2 = StructType([StructField("date", StringType(), True)])
 
-    tweets = (
-        spark.readStream.format("kafka")
-        .option("kafka.bootstrap.servers", "kafka:9092")
-        .option("subscribe", "twitter")
-        .load()
-    )
+values = df.select(
+    from_json(df.value.cast("string"), mySchema).alias("tweet"),
+    from_json(df.value.cast("string"), mySchema2).alias("date"),
+)
 
-    mySchema = StructType([StructField("text", StringType(), True)])
-    mySchema2 = StructType([StructField("date", StringType(), True)])
-    values = tweets.select(
-        from_json(tweets.value.cast("string"), mySchema).alias("tweet"),
-        from_json(tweets.value.cast("string"), mySchema2).alias("date"),
-    )
+df1 = values.select("tweet.*", "date.*")
 
-    df1 = values.select("tweet.*", "date.*")
+# TODO
+# mySchema = StructType(
+#     [StructField("text", StringType(), True),
+#     StructField("date", StringType(), True)]
+# )
 
-    clean_tweets = udf(cleanTweet, StringType())
-    raw_tweets = df1.withColumn("processed_text", clean_tweets(col("text")))
+values = df.select(
+    from_json(df.value.cast("string"), mySchema).alias("tweet"),
+    from_json(df.value.cast("string"), mySchema).alias("date"),
+)
 
-    subjectivity = udf(getSubjectivity, FloatType())
-    polarity = udf(getPolarity, FloatType())
-    sentiment = udf(getSentiment, StringType())
+df1 = values.select("tweet.*")
 
-    subjectivity_tweets = raw_tweets.withColumn(
-        "subjectivity", subjectivity(col("processed_text"))
-    )
-    polarity_tweets = subjectivity_tweets.withColumn(
-        "polarity", polarity(col("processed_text"))
-    )
-    sentiment_tweets = polarity_tweets.withColumn(
-        "sentiment", sentiment(col("polarity"))
-    )
+clean_tweets = udf(cleanTweet, StringType())
+raw_tweets = df1.withColumn("processed_text", clean_tweets(col("text")))
 
-    sentiment_tweets.writeStream.foreach(WriteRowMongo()).start().awaitTermination()
+subjectivity = udf(getSubjectivity, FloatType())
+polarity = udf(getPolarity, FloatType())
+sentiment = udf(getSentiment, StringType())
 
-    # sentiment_tweets.writeStream\
-    #     .outputMode('update')\
-    #     .format('console')\
-    #     .start()\
-    #     .awaitTermination()
+subjectivity_tweets = raw_tweets.withColumn(
+    "subjectivity", subjectivity(col("processed_text"))
+)
+polarity_tweets = subjectivity_tweets.withColumn(
+    "polarity", polarity(col("processed_text"))
+)
+sentiment_tweets = polarity_tweets.withColumn("sentiment", sentiment(col("polarity")))
 
+# print("Output :")
+# sentiment_tweets.writeStream.outputMode("update").format(
+#     "console"
+# ).start().awaitTermination()
 
-if __name__ == "__main__":
-    main()
+# Write to MongoDB
+sentiment_tweets.writeStream.foreach(WriteRowMongo()).start().awaitTermination()
