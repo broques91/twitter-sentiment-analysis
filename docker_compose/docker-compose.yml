@@ -1,0 +1,105 @@
+version: "3"
+
+services:
+  producer:
+    container_name: twitter_producer
+    build: "./produce"
+    depends_on:
+      - kafka
+      - db
+    restart: on-failure
+    volumes:
+      - ./produce:/produce
+
+  consumer:
+    container_name: twitter_consumer
+    build: "./consume"
+    depends_on:
+      - kafka
+      - db
+      - spark
+    restart: on-failure
+    volumes:
+      - ./consume:/consume
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+
+  zookeeper:
+    container_name: twitter_zookeper
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    container_name: twitter_kafka
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  
+  db:
+    image: 'mongo:latest'
+    container_name: 'mongo'
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=secret
+      - MONGO_INITDB_DATABASE=tweets
+    volumes:
+      - ./data:/data/db
+    ports:
+      - "27017:27017"
+  
+  streamlit:
+    container_name: streamlit
+    build: "./app"
+    depends_on:
+      - db
+    restart: on-failure
+  
+  spark:
+    build: ./spark
+    image: spark_python
+    container_name: 'master'
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+  spark-worker:
+    build: ./spark
+    image: spark_python
+    container_name: 'worker'
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+  spark-worker2:
+    build: ./spark
+    image: spark_python
+    container_name: 'worker2'
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+
+volumes:
+  data:

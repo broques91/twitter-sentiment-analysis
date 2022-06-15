@@ -1,0 +1,8 @@
+python-dotenv
+kafka-python
+tweepy
+configparser
+pymongo
+lxml
+snscrape
+pyspark

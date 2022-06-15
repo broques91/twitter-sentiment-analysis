@@ -1,0 +1,5 @@
+pymongo
+textblob
+textblob-fr
+pyspark
+findspark
