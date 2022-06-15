@@ -96,7 +96,7 @@ class WriteRowMongo:
 
 
 mySchema = StructType([StructField("text", StringType(), True)])
-mySchema2 = StructType([StructField("date", StringType(), True)])
+mySchema2 = StructType([StructField("created_at", StringType(), True)])
 
 values = df.select(
     from_json(df.value.cast("string"), mySchema).alias("tweet"),
@@ -110,13 +110,6 @@ df1 = values.select("tweet.*", "date.*")
 #     [StructField("text", StringType(), True),
 #     StructField("date", StringType(), True)]
 # )
-
-values = df.select(
-    from_json(df.value.cast("string"), mySchema).alias("tweet"),
-    from_json(df.value.cast("string"), mySchema).alias("date"),
-)
-
-df1 = values.select("tweet.*")
 
 clean_tweets = udf(cleanTweet, StringType())
 raw_tweets = df1.withColumn("processed_text", clean_tweets(col("text")))
