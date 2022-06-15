@@ -70,8 +70,8 @@ def create_df_from_list(items):
 
     # Print results.
     for item in items:
-        created_at = item["date"]
-        tweet = item["content"]
+        created_at = item["created_at"]
+        tweet = item["text"]
         clean_tweet = item["processed_text"]
         sentiment = item["sentiment"]
         dates.append(created_at)
@@ -80,7 +80,7 @@ def create_df_from_list(items):
         feelings.append(sentiment)
 
     data = {
-        "date": dates,
+        "created_at": dates,
         "tweet": tweets,
         "clean_tweet": clean_tweets,
         "sentiment": feelings,
@@ -91,6 +91,7 @@ def create_df_from_list(items):
 
 
 client = init_connection()
+#st.write(get_data())
 
 # A while loop that is constantly updating the dataframe and the charts.
 while True:
