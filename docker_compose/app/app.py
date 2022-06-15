@@ -7,6 +7,8 @@ import plotly.express as px
 from pymongo import MongoClient
 from datetime import datetime
 
+time.sleep(20)
+
 st.set_page_config(
     page_title="Real-Time Twitter Sentiment Analysis Dashboard",
     page_icon="✅",
@@ -63,10 +65,10 @@ def create_df_from_list(items):
     
     # Print results.
     for item in items:
-        created_at = item['date'].decode('utf-8')
-        tweet = item['content'].decode('utf-8')
-        clean_tweet = item['clean_tweet'].decode('utf-8')
-        sentiment = item['sentiment'].decode('utf-8')
+        created_at = item['date']
+        tweet = item['content']
+        clean_tweet = item['processed_text']
+        sentiment = item['sentiment']
         dates.append(created_at)
         tweets.append(tweet)
         clean_tweets.append(clean_tweet)
