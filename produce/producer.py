@@ -1,8 +1,10 @@
 import tweepy
 from tweepy import StreamingClient, StreamRule
 import os
+import re
 import json
 from kafka import KafkaProducer
+from datetime import datetime
 
 from dotenv import load_dotenv
 
@@ -23,11 +25,12 @@ topic_name = "twitter"
 
 class TweetPrinterV2(tweepy.StreamingClient):
     def on_tweet(self, tweet):
-        print(tweet.data)
-        print(f"{tweet.id} {tweet.created_at} ({tweet.author_id}): {tweet.text}")
+        #print(f"{tweet.id} {tweet.created_at}: {tweet.text}")
         data = tweet.data
+        data["id"] = (tweet.id)
+        data["created_at"] = str(tweet.created_at)
         producer.send(topic_name, data)
-        print("-" * 50)
+        #print("-" * 50)
 
 
 printer = TweetPrinterV2(bearer_token)
@@ -46,10 +49,9 @@ else:
     print("no rules to delete")
 
 # add new rules
-# rule = StreamRule(value="Python")
 rule = StreamRule(value="elections lang:fr")
 printer.add_rules(rule)
 
-printer.filter(expansions="author_id", tweet_fields="created_at")
+printer.filter(tweet_fields="created_at")
 
 printer.filter()
