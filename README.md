@@ -11,12 +11,12 @@ This application will collect some tweets, push to Kafka via tweepy, use PySpark
 ## Setup
 
 - Clone the repo
-- After obtaining your set of Twitter API keys and tokens, you have to set those in the secret.ini file :
+- After obtaining your set of Twitter API keys and tokens, you have to set those in a env file in the produce directory :
 
 ```
-[twitter]
 consumer_key=xxxx
 consumer_secret=xxxx
+bearer_token=xxxx
 access_token=xxxx
 access_token_secret=xxxx
 ```
@@ -28,9 +28,12 @@ Services need to be started in a specific order with the following commands:
 # Start Kafka and MongoDB
 docker-compose up -d kafka db
 
-# Start Streamlit
-docker-compose up streamlit
+# Start Spark
+docker-compose up -d spark spark-worker spark-worker2
 
 # Start the producer and the consumer
 docker-compose up -d producer consumer
+
+# Start Streamlit
+docker-compose up streamlit
 ```
