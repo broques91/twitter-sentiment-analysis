@@ -89,7 +89,7 @@ def main():
         .load()
     )
 
-    mySchema = StructType([StructField("content", StringType(), True)])
+    mySchema = StructType([StructField("text", StringType(), True)])
     mySchema2 = StructType([StructField("date", StringType(), True)])
     values = tweets.select(
         from_json(tweets.value.cast("string"), mySchema).alias("tweet"),
@@ -99,7 +99,7 @@ def main():
     df1 = values.select("tweet.*", "date.*")
 
     clean_tweets = udf(cleanTweet, StringType())
-    raw_tweets = df1.withColumn("processed_text", clean_tweets(col("content")))
+    raw_tweets = df1.withColumn("processed_text", clean_tweets(col("text")))
 
     subjectivity = udf(getSubjectivity, FloatType())
     polarity = udf(getPolarity, FloatType())
