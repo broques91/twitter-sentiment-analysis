@@ -1,6 +1,5 @@
 import streamlit as st
 import time
-import numpy as np
 import pandas as pd
 import plotly.express as px
 
@@ -34,17 +33,18 @@ placeholder = st.empty()
 # Uses st.experimental_singleton to only run once.
 @st.experimental_singleton
 def init_connection():
-    return MongoClient(
-        host='db',
-        username='root',
-        password='secret'
-    )
+    return MongoClient(host="db", username="root", password="secret")
 
 
 # Pull data from the collection.
 # Uses st.experimental_memo to only rerun when the query changes or after 10 min.
-#@st.experimental_memo(ttl=600)
+# @st.experimental_memo(ttl=600)
 def get_data():
+    """
+    It connects to the MongoDB database, finds all the tweets in the elections collection, and returns
+    them as a list
+    :return: A list of dictionaries.
+    """
     db = client.tweets
     items = db.elections.find()
     items = list(items)  # make hashable for st.experimental_memo
@@ -52,6 +52,13 @@ def get_data():
 
 
 def create_df_from_list(items):
+    """
+    It takes a list of dictionaries, removes the _id key from each dictionary, and then creates a pandas
+    DataFrame from the remaining keys
+    
+    :param items: the list of dictionaries that we want to convert to a DataFrame
+    :return: A dataframe with the date, tweet, clean_tweet, and sentiment.
+    """
     dates = []
     tweets = []
     clean_tweets = []
@@ -59,20 +66,25 @@ def create_df_from_list(items):
 
     # Remove _id
     for d in items:
-        d.pop('_id')
-    
+        d.pop("_id")
+
     # Print results.
     for item in items:
-        created_at = item['date'].decode('utf-8')
-        tweet = item['content'].decode('utf-8')
-        clean_tweet = item['clean_tweet'].decode('utf-8')
-        sentiment = item['sentiment'].decode('utf-8')
+        created_at = item["date"]
+        tweet = item["content"]
+        clean_tweet = item["processed_text"]
+        sentiment = item["sentiment"]
         dates.append(created_at)
         tweets.append(tweet)
         clean_tweets.append(clean_tweet)
         feelings.append(sentiment)
 
-    data = {'date': dates, 'tweet':tweets, 'clean_tweet':clean_tweets, 'sentiment':feelings}
+    data = {
+        "date": dates,
+        "tweet": tweets,
+        "clean_tweet": clean_tweets,
+        "sentiment": feelings,
+    }
     # Create the pandas DataFrame
     df = pd.DataFrame(data)
     return df
@@ -80,14 +92,14 @@ def create_df_from_list(items):
 
 client = init_connection()
 
+# A while loop that is constantly updating the dataframe and the charts.
 while True:
 
     items = get_data()
     df = create_df_from_list(items)
-    # Create random col for test
-    #df['random'] = np.random.randint(1, 6, df.shape[0])
 
-      # creating KPIs 
+
+    # creating KPIs
     count_tweets = len(df)
     count_positive = len(df[df["sentiment"] == "Positive"])
     count_neutral = len(df[df["sentiment"] == "Neutral"])
@@ -103,24 +115,34 @@ while True:
         # create three columns
         kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
-        # fill in those three columns with respective metrics or KPIs 
+        # fill in those three columns with respective metrics or KPIs
         kpi1.metric(label="Tweets", value=int(count_tweets), delta=None)
-        kpi2.metric(label="Positive  😊", value=count_positive, delta=f'{round(avg_positive*100, 2)} %')
-        kpi3.metric(label="Neutral  😐", value=count_neutral, delta=f'{round(avg_neutral*100, 2)} %')
-        kpi4.metric(label="Negative  😒", value=count_negative, delta=f'{round(avg_negative*100, 2)} %')
-
+        kpi2.metric(
+            label="Positive  😊",
+            value=count_positive,
+            delta=f"{round(avg_positive*100, 2)} %",
+        )
+        kpi3.metric(
+            label="Neutral  😐",
+            value=count_neutral,
+            delta=f"{round(avg_neutral*100, 2)} %",
+        )
+        kpi4.metric(
+            label="Negative  😒",
+            value=count_negative,
+            delta=f"{round(avg_negative*100, 2)} %",
+        )
 
         fig_col1, fig_col2 = st.columns(2)
         with fig_col1:
             st.markdown("### Time Series")
-            fig = px.line(data_frame=df, x='date', color='sentiment')
+            fig = px.line(data_frame=df, x="date", color="sentiment")
             st.write(fig)
         with fig_col2:
             st.markdown("### Second Chart")
-            fig2 = px.histogram(data_frame=df, x='sentiment')
+            fig2 = px.histogram(data_frame=df, x="sentiment")
             st.write(fig2)
 
         st.markdown("### Detailed Data View")
         st.dataframe(df)
         time.sleep(1)
-
