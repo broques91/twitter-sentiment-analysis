@@ -6,6 +6,8 @@ import plotly.express as px
 from pymongo import MongoClient
 from datetime import datetime
 
+#time.sleep(20)
+
 st.set_page_config(
     page_title="Real-Time Twitter Sentiment Analysis Dashboard",
     page_icon="✅",
@@ -55,7 +57,7 @@ def create_df_from_list(items):
     """
     It takes a list of dictionaries, removes the _id key from each dictionary, and then creates a pandas
     DataFrame from the remaining keys
-    
+
     :param items: the list of dictionaries that we want to convert to a DataFrame
     :return: A dataframe with the date, tweet, clean_tweet, and sentiment.
     """
@@ -137,7 +139,7 @@ while True:
         fig_col1, fig_col2 = st.columns(2)
         with fig_col1:
             st.markdown("### Time Series")
-            fig = px.line(data_frame=df, x="date", color="sentiment")
+            fig = px.line(data_frame=df, x="created_at", color="sentiment")
             st.write(fig)
         with fig_col2:
             st.markdown("### Second Chart")
