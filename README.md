@@ -2,6 +2,8 @@
 
 ## Overview
 
+![pipeline](image/pipeline-projet.png "pipeline")
+
 This application will collect some tweets, push to Kafka via tweepy, use PySpark to monitor the topic and push to a mongoDB database. Finally Streamlit is used to show a real time view of the data being generated.
 
 ## Requirements
